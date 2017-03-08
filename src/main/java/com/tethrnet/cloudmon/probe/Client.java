@@ -6,7 +6,7 @@
  * PERMISSION OF CHINA UNIONPAY CO., LTD.
  */
 
-package com.tethrnet.cloudmon.probe.server;
+package com.tethrnet.cloudmon.probe;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
