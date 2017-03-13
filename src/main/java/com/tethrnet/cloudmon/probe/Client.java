@@ -10,13 +10,18 @@ package com.tethrnet.cloudmon.probe;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.parsetools.RecordParser;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /*
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class Client extends AbstractVerticle {
+
+    protected Log log = LogFactory.getLog(Client.class);
 
     public Client() {
         vertx = Vertx.vertx();
@@ -33,7 +38,7 @@ public class Client extends AbstractVerticle {
 
     public void start() throws Exception {
 
-        vertx.createNetClient().connect(1234, "localhost", res -> {
+        vertx.createNetClient().connect(Constant.PROBE_SERVER_PORT, "192.168.56.1", res -> {
 
             if (res.succeeded()) {
                 NetSocket socket = res.result();
@@ -41,7 +46,7 @@ public class Client extends AbstractVerticle {
                 RecordParser parser = RecordParser.newDelimited("\n", h -> handleMsg(h.toString(), socket));
 
                 socket.handler(buffer -> {
-                    System.out.println("Net client receiving: " + buffer.toString("UTF-8"));
+                    log.debug("Net client receiving: " + buffer.toString("UTF-8"));
 
                 });
 
@@ -49,31 +54,35 @@ public class Client extends AbstractVerticle {
 
                 socket.write("online\n");
             } else {
-                System.out.println("Failed to connect " + res.cause());
+                log.warn("Failed to connect " + res.cause());
             }
         });
     }
 
     private void handleMsg(String s, NetSocket socket) {
-        if (s.startsWith("{new")) {
-            new Thread(() -> startProbe(s)).start();
+        JsonObject msg = new JsonObject(s);
+        String action = msg.getString("action");
+        String host = msg.getString("host");
+
+        if (action.equals("add")) {
+            new Thread(() -> startProbe(host, Constant.HTTP_SERVER_PORT)).start();
         }
     }
 
-    private void startProbe(String s) {
-        while (true){
-            vertx.createHttpClient().getNow(8080, "localhost", "/", resp -> {
-                System.out.println("Got response " + resp.statusCode() + "; port: " + s);
+    private void startProbe(String host, int port) {
+        while (true) {
+            vertx.createHttpClient().getNow(port, host, "/", resp -> {
+                log.info("send http request to "+ host);
+                log.debug("Got response " + resp.statusCode() + "; port: " + host);
                 resp.bodyHandler(body -> {
-                    System.out.println("Got data " + body.toString("ISO-8859-1"));
+                    log.debug("Got data " + body.toString("ISO-8859-1"));
                 });
             });
             try {
-                Thread.sleep(10*1000l);
+                Thread.sleep(Constant.SEND_INTERVAL);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-
     }
 }
