@@ -1,6 +1,5 @@
 package com.tethrnet.cloudmon.probe;
 
-import io.vertx.core.cli.CLI;
 
 /**
  * Created by huiyu on 17/3/13.
