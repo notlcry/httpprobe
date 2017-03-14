@@ -28,13 +28,21 @@ public class MsgQueue {
     }
 
 
-
     public void put(String msg){
         try {
             msgQueue.put(msg);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public  String take(){
+        try {
+            return msgQueue.take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
