@@ -15,6 +15,9 @@ public class MsgHandle implements Runnable {
     protected Log log = LogFactory.getLog(MsgHandle.class);
     private Vertx vertx;
 
+    public MsgHandle(Vertx vertx) {
+        this.vertx = vertx;
+    }
 
     @Override
     public void run() {

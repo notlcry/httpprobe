@@ -27,5 +27,7 @@ public class Main {
             e.printStackTrace();
         }
 
+        MsgHandle handle = new MsgHandle(vertx);
+        new Thread(handle).start();
     }
 }
