@@ -23,14 +23,13 @@ public class MsgHandle implements Runnable {
     public void run() {
 
         String record = MsgQueue.getInstance().take();
+        log.info("poll msg: " + record);
+
         Gson gson = new Gson();
         HashMap map = gson.fromJson(record, HashMap.class);
         String action = map.get("action").toString();
         String host = map.get("host").toString();
-
-        if (action.equals("add")) {
-            new Thread(() -> startProbe(host, Constant.HTTP_SERVER_PORT)).start();
-        }
+        MsgQueue.getInstance().getHostMap().put(host,1);
     }
 
     private void startProbe(String host, int port) {
@@ -42,7 +41,7 @@ public class MsgHandle implements Runnable {
                     resp.bodyHandler(body -> {
                         log.debug("Got data " + body.toString("ISO-8859-1"));
                     });
-                }).close();
+                });
                 Thread.sleep(Constant.SEND_INTERVAL);
             } catch (Exception e) {
                 e.printStackTrace();

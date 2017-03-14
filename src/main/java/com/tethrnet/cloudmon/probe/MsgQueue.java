@@ -1,6 +1,8 @@
 package com.tethrnet.cloudmon.probe;
 
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
@@ -12,6 +14,7 @@ public class MsgQueue {
 
     public static volatile MsgQueue INSTANCE = null;
     private BlockingQueue<String> msgQueue = new LinkedBlockingDeque<>();
+    private ConcurrentHashMap<String,Integer> hostMap = new ConcurrentHashMap();
 
     public static MsgQueue getInstance() {
         if (INSTANCE == null) {
@@ -45,5 +48,7 @@ public class MsgQueue {
         return null;
     }
 
-
+    public ConcurrentHashMap<String, Integer> getHostMap() {
+        return hostMap;
+    }
 }

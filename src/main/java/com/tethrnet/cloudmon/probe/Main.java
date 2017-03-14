@@ -11,6 +11,12 @@ public class Main {
     public static void main(String[] args) {
         Vertx vertx = Vertx.vertx();
 
+        MsgHandle handle = new MsgHandle(vertx);
+        new Thread(handle).start();
+
+        HttpClientRunner handleHttp = new HttpClientRunner(vertx);
+        new Thread(handleHttp).start();
+
         // start http server on startup
         Server server =  new Server(vertx);
         try {
@@ -26,8 +32,5 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        MsgHandle handle = new MsgHandle(vertx);
-        new Thread(handle).start();
     }
 }
