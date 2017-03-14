@@ -8,7 +8,6 @@
 
 package com.tethrnet.cloudmon.probe;
 
-import com.google.gson.Gson;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
@@ -19,8 +18,6 @@ import io.vertx.core.parsetools.RecordParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.HashMap;
-
 /*
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
@@ -28,12 +25,13 @@ public class Client extends AbstractVerticle {
 
     protected Log log = LogFactory.getLog(Client.class);
 
-    public Client() {
-        vertx = Vertx.vertx();
+    public Client(Vertx v) {
+        vertx = v;
     }
 
     public static void main(String[] args) {
-        Client client = new Client();
+        Vertx v = Vertx.vertx();
+        Client client = new Client(v);
         try {
             client.start();
         } catch (Exception e) {
@@ -74,39 +72,24 @@ public class Client extends AbstractVerticle {
 
     private void handleMsg(String source, NetSocket socket) {
         log.info("handle msg: " + source);
+        MsgQueue.getInstance().put(source);
         try {
 //            JsonObject msg = new JsonObject(s);
 //            String action = msg.getString("action");
 //            String host = msg.getString("host");
 
-            Gson gson = new Gson();
-            HashMap map = gson.fromJson(source, HashMap.class);
-            String action = map.get("action").toString();
-            String host = map.get("host").toString();
-
-            if (action.equals("add")) {
-                new Thread(() -> startProbe(host, Constant.HTTP_SERVER_PORT)).start();
-            }
+//            Gson gson = new Gson();
+//            HashMap map = gson.fromJson(source, HashMap.class);
+//            String action = map.get("action").toString();
+//            String host = map.get("host").toString();
+//
+//            if (action.equals("add")) {
+//                new Thread(() -> startProbe(host, Constant.HTTP_SERVER_PORT)).start();
+//            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
-    private void startProbe(String host, int port) {
-        while (true) {
-            try {
-                vertx.createHttpClient().getNow(port, host, "/", resp -> {
-                    log.info("send http request to " + host);
-                    log.debug("Got response " + resp.statusCode() + "; port: " + host);
-                    resp.bodyHandler(body -> {
-                        log.debug("Got data " + body.toString("ISO-8859-1"));
-                    });
-                }).close();
-                Thread.sleep(Constant.SEND_INTERVAL);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 }

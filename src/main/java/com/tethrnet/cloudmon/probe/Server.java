@@ -14,7 +14,7 @@ public class Server extends AbstractVerticle {
 
     // Convenience method so you can run it in your IDE
     public static void main(String[] args) {
-        Server server = new Server();
+        Server server = new Server(Vertx.vertx());
         try {
             server.start();
         } catch (Exception e) {
@@ -22,8 +22,8 @@ public class Server extends AbstractVerticle {
         }
     }
 
-    public Server() {
-        vertx = Vertx.vertx();
+    public Server(Vertx v) {
+        vertx = v;
     }
 
     @Override
