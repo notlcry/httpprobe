@@ -8,13 +8,19 @@
 
 package com.tethrnet.cloudmon.probe;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.NetClient;
+import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.parsetools.RecordParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.util.HashMap;
 
 /*
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -38,49 +44,69 @@ public class Client extends AbstractVerticle {
 
     public void start() throws Exception {
 
-        vertx.createNetClient().connect(Constant.PROBE_SERVER_PORT, "192.168.56.1", res -> {
+        NetClientOptions options = new NetClientOptions().setConnectTimeout(10000).setTcpKeepAlive(true);
+        NetClient client = vertx.createNetClient(options);
+
+        client.connect(Constant.PROBE_SERVER_PORT, "192.168.56.1", (AsyncResult<NetSocket> res) -> {
 
             if (res.succeeded()) {
                 NetSocket socket = res.result();
 
                 RecordParser parser = RecordParser.newDelimited("\n", h -> handleMsg(h.toString(), socket));
 
-                socket.handler(buffer -> {
-                    log.debug("Net client receiving: " + buffer.toString("UTF-8"));
-
-                });
+//                socket.handler(buffer -> {
+//                    log.debug("Net client receiving: " + buffer.toString("UTF-8"));
+//
+//                });
 
                 socket.handler(parser);
 
                 socket.write("online\n");
+
+                socket.closeHandler(r -> log.info("Socket closed"));
+                socket.exceptionHandler(r -> r.printStackTrace());
             } else {
                 log.warn("Failed to connect " + res.cause());
             }
         });
     }
 
-    private void handleMsg(String s, NetSocket socket) {
-        JsonObject msg = new JsonObject(s);
-        String action = msg.getString("action");
-        String host = msg.getString("host");
+    private void handleMsg(String source, NetSocket socket) {
+        log.info("handle msg: " + source);
+        try {
+//            JsonObject msg = new JsonObject(s);
+//            String action = msg.getString("action");
+//            String host = msg.getString("host");
 
-        if (action.equals("add")) {
-            new Thread(() -> startProbe(host, Constant.HTTP_SERVER_PORT)).start();
+            Gson gson = new Gson();
+            HashMap map = gson.fromJson(source, HashMap.class);
+            String action = map.get("action").toString();
+            String host = map.get("host").toString();
+
+            if (action.equals("add")) {
+                new Thread(() -> startProbe(host, Constant.HTTP_SERVER_PORT)).start();
+            }
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
     }
 
     private void startProbe(String host, int port) {
         while (true) {
-            vertx.createHttpClient().getNow(port, host, "/", resp -> {
-                log.info("send http request to "+ host);
-                log.debug("Got response " + resp.statusCode() + "; port: " + host);
-                resp.bodyHandler(body -> {
-                    log.debug("Got data " + body.toString("ISO-8859-1"));
-                });
-            });
             try {
+                vertx.createHttpClient().getNow(port, host, "/", resp -> {
+                    log.info("send http request to " + host);
+                    log.debug("Got response " + resp.statusCode() + "; port: " + host);
+                    resp.bodyHandler(body -> {
+                        log.debug("Got data " + body.toString("ISO-8859-1"));
+                    });
+                }).close();
                 Thread.sleep(Constant.SEND_INTERVAL);
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
