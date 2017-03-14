@@ -62,7 +62,8 @@ public class Client extends AbstractVerticle {
 
                 socket.write("online\n");
 
-                socket.closeHandler(r -> log.info("Socket closed"));
+//                socket.closeHandler(r -> log.info("Socket closed"));
+//                socket.close();
                 socket.exceptionHandler(r -> r.printStackTrace());
             } else {
                 log.warn("Failed to connect " + res.cause());
