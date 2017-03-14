@@ -8,7 +8,6 @@
 
 package com.tethrnet.cloudmon.probe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -44,7 +43,9 @@ public class Client extends AbstractVerticle {
 
     public void start() throws Exception {
 
-        NetClientOptions options = new NetClientOptions().setConnectTimeout(10000).setTcpKeepAlive(true);
+        NetClientOptions options = new NetClientOptions().setConnectTimeout(10000).setTcpKeepAlive(true)
+                .setLogActivity(true);
+
         NetClient client = vertx.createNetClient(options);
 
         client.connect(Constant.PROBE_SERVER_PORT, "192.168.56.1", (AsyncResult<NetSocket> res) -> {
@@ -86,9 +87,6 @@ public class Client extends AbstractVerticle {
             if (action.equals("add")) {
                 new Thread(() -> startProbe(host, Constant.HTTP_SERVER_PORT)).start();
             }
-
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
