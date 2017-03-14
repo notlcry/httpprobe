@@ -33,8 +33,10 @@ public class HttpClientRunner implements Runnable {
         while (true) {
             try {
                 MsgQueue.getInstance().getHostMap().forEach((host, v) -> {
-                    sendReq(host, Constant.HTTP_SERVER_PORT);
+//                    sendReq(host, Constant.HTTP_SERVER_PORT);
+                    sendReqTest(host, Constant.HTTP_SERVER_PORT);
                 });
+
                 Thread.sleep(Constant.SEND_INTERVAL);
                 log.info("send http end");
             } catch (Exception e) {
@@ -65,5 +67,9 @@ public class HttpClientRunner implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendReqTest(String host, int port){
+        log.info("Send Req to " + host);
     }
 }
