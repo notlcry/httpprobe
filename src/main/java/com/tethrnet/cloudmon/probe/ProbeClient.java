@@ -31,8 +31,9 @@ public class ProbeClient extends AbstractVerticle {
     public ProbeClient(Vertx v) {
         vertx = v;
 
-        NetClientOptions options = new NetClientOptions().setConnectTimeout(10000).setTcpKeepAlive(true)
-                .setLogActivity(true);
+        NetClientOptions options = new NetClientOptions().setConnectTimeout(1).setTcpKeepAlive(true);
+//                .setLogActivity(true).setReconnectAttempts(2).setReconnectInterval(1 * 1000l).setConnectTimeout
+//                        (1000);
         client = vertx.createNetClient(options);
     }
 
@@ -68,13 +69,14 @@ public class ProbeClient extends AbstractVerticle {
 
                 socket.closeHandler(r -> {
                     log.info("Socket closed");
-//                    reconnect();
+                    reconnect();
                 });
 
                 socket.exceptionHandler(r -> r.printStackTrace());
 
             } else {
                 log.warn("Failed to connect " + res.cause());
+                reconnect();
             }
         });
     }
