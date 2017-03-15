@@ -1,5 +1,8 @@
 import io.vertx.core.json.JsonObject;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Created by huiyu on 17/3/13.
  */
@@ -11,5 +14,10 @@ public class Try {
             String host = new JsonObject(e.toString()).getString("hostName");
             System.out.println(host);
         });
+
+        Set<String> set = new HashSet<>();
+        set.add(new String("123"));
+        set.remove(new String("123"));
+        System.out.println(set.size());
     }
 }

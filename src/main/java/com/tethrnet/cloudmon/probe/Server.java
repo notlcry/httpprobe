@@ -28,7 +28,8 @@ public class Server extends AbstractVerticle {
 
     @Override
     public void start() throws Exception {
-        vertx.createHttpServer().requestHandler(req -> req.response().putHeader("content-type", "text/html").end("<html><body><h1>Hello from Probe Server" +
+        vertx.createHttpServer().requestHandler(req -> req.response().putHeader("content-type", "text/html").end
+                ("<html><body><h1>Hello from Probe Server" +
                 ".x!</h1></body></html>")).listen(Constant.HTTP_SERVER_PORT);
         log.info("Http Probe Serer started");
     }

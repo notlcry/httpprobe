@@ -21,15 +21,28 @@ public class MsgHandle implements Runnable {
 
     @Override
     public void run() {
+        vertx.setPeriodic(1, id -> {
+            String record = MsgQueue.getInstance().poll();
+            if (record != null) {
+                log.info("poll msg: " + record);
 
-        String record = MsgQueue.getInstance().take();
-        log.info("poll msg: " + record);
+                Gson gson = new Gson();
+                HashMap map = gson.fromJson(record, HashMap.class);
+                String action = map.get("action").toString();
+                String host = map.get("host").toString();
+                if (action.equals("add")){
+                    MsgQueue.getInstance().addHost(host);
+                    log.info("add " + host + " to Map");
+                }
 
-        Gson gson = new Gson();
-        HashMap map = gson.fromJson(record, HashMap.class);
-        String action = map.get("action").toString();
-        String host = map.get("host").toString();
-        MsgQueue.getInstance().getHostMap().put(host,1);
+                if (action.equals("remove")){
+                    MsgQueue.getInstance().removeHost(host);
+                    log.info("remove " + host + " from Map");
+                }
+
+
+            }
+        });
     }
 
     private void startProbe(String host, int port) {

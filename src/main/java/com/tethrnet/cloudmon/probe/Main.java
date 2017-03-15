@@ -26,9 +26,11 @@ public class Main {
         }
 
         // try to connect probe server on startup
-        Client client = new Client(vertx);
+        ProbeClient probeClient = new ProbeClient(vertx);
+
+        MsgQueue.getInstance().setNetClient(probeClient.getClient());
         try {
-            client.start();
+            probeClient.start();
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,8 +1,11 @@
 package com.tethrnet.cloudmon.probe;
 
-import java.util.Map;
+import io.netty.util.internal.ConcurrentSet;
+import io.vertx.core.net.NetClient;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
@@ -14,7 +17,8 @@ public class MsgQueue {
 
     public static volatile MsgQueue INSTANCE = null;
     private BlockingQueue<String> msgQueue = new LinkedBlockingDeque<>();
-    private ConcurrentHashMap<String,Integer> hostMap = new ConcurrentHashMap();
+    private ConcurrentSet<String> hosts = new ConcurrentSet();
+    private NetClient netClient;
 
     public static MsgQueue getInstance() {
         if (INSTANCE == null) {
@@ -31,7 +35,7 @@ public class MsgQueue {
     }
 
 
-    public void put(String msg){
+    public synchronized void put(String msg){
         try {
             msgQueue.put(msg);
         } catch (InterruptedException e) {
@@ -48,7 +52,30 @@ public class MsgQueue {
         return null;
     }
 
-    public ConcurrentHashMap<String, Integer> getHostMap() {
-        return hostMap;
+    public  String poll(){
+        try {
+            return msgQueue.poll();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public synchronized List<String> getHosts() {
+        List<String> allHost = new ArrayList<>();
+        hosts.forEach(host->allHost.add(host));
+        return allHost;
+    }
+
+    public synchronized void addHost(String host) {
+        hosts.add(host);
+    }
+
+    public synchronized void removeHost(String host) {
+        hosts.remove(host);
+    }
+
+    public void setNetClient(NetClient netClient) {
+        this.netClient = netClient;
     }
 }

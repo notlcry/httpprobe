@@ -21,17 +21,24 @@ import org.apache.commons.logging.LogFactory;
 /*
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class Client extends AbstractVerticle {
+public class ProbeClient extends AbstractVerticle {
 
-    protected Log log = LogFactory.getLog(Client.class);
+    protected Log log = LogFactory.getLog(ProbeClient.class);
 
-    public Client(Vertx v) {
+
+    private NetClient client;
+
+    public ProbeClient(Vertx v) {
         vertx = v;
+
+        NetClientOptions options = new NetClientOptions().setConnectTimeout(10000).setTcpKeepAlive(true)
+                .setLogActivity(true);
+        client = vertx.createNetClient(options);
     }
 
     public static void main(String[] args) {
         Vertx v = Vertx.vertx();
-        Client client = new Client(v);
+        ProbeClient client = new ProbeClient(v);
         try {
             client.start();
         } catch (Exception e) {
@@ -40,11 +47,6 @@ public class Client extends AbstractVerticle {
     }
 
     public void start() throws Exception {
-
-        NetClientOptions options = new NetClientOptions().setConnectTimeout(10000).setTcpKeepAlive(true)
-                .setLogActivity(true);
-
-        NetClient client = vertx.createNetClient(options);
 
         client.connect(Constant.PROBE_SERVER_PORT, "192.168.56.1", (AsyncResult<NetSocket> res) -> {
 
@@ -58,17 +60,35 @@ public class Client extends AbstractVerticle {
 //
 //                });
 
+                startHB(socket);
+
                 socket.handler(parser);
 
                 socket.write("online\n");
 
-//                socket.closeHandler(r -> log.info("Socket closed"));
-//                socket.close();
+                socket.closeHandler(r -> {
+                    log.info("Socket closed");
+//                    reconnect();
+                });
+
                 socket.exceptionHandler(r -> r.printStackTrace());
+
             } else {
                 log.warn("Failed to connect " + res.cause());
             }
         });
+    }
+
+    private void reconnect() {
+        try {
+            start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void startHB(NetSocket socket) {
+        vertx.setPeriodic(Constant.SEND_INTERVAL, id -> socket.write("I am alive\n"));
     }
 
     private void handleMsg(String source, NetSocket socket) {
@@ -90,7 +110,9 @@ public class Client extends AbstractVerticle {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
+    public NetClient getClient() {
+        return client;
+    }
 }
