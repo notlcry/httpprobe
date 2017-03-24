@@ -19,34 +19,40 @@ public class HttpClientRunner implements Runnable {
 
     protected Log log = LogFactory.getLog(HttpClientRunner.class);
     private Vertx vertx;
+    private int interval = 100;
 
-    public HttpClientRunner(Vertx vertx) {
+    public HttpClientRunner(Vertx vertx, int intv) {
         this.vertx = vertx;
+        this.interval = intv;
     }
 
     @Override
     public void run() {
-        vertx.setPeriodic(Constant.SEND_INTERVAL, id -> {
+        vertx.setPeriodic(interval, id -> {
 
             MsgQueue.getInstance().getHosts().forEach((host) -> {
 //                sendReq(host, Constant.HTTP_SERVER_PORT);
                 startProbe(host, Constant.HTTP_SERVER_PORT);
             });
-            log.info("end a loop");
+            log.debug("end a loop");
         });
     }
 
     private void startProbe(String host, int port) {
         try {
-            HttpClientOptions options = new HttpClientOptions().setKeepAlive(false).setConnectTimeout(1000);
+            HttpClientOptions options = new HttpClientOptions().setKeepAlive(true).setConnectTimeout(1000);
             HttpClient client = vertx.createHttpClient(options);
-            client.getNow(port, host, "/", resp -> {
-                log.info("send http request to " + host);
-                log.debug("Got response " + resp.statusCode() + "; port: " + host);
-                resp.bodyHandler(body -> {
-                    log.debug("got data " + body.toString("ISO-8859-1"));
+
+            for (int i = 0; i < 1; i++) {
+                client.getNow(port, host, "/", resp -> {
+                    log.info("send http request to " + host);
+                    log.debug("Got response " + resp.statusCode() + "; port: " + host);
+                    resp.bodyHandler(body -> {
+                        log.debug("got data " + body.toString("ISO-8859-1"));
+                    });
                 });
-            }).close();
+            }
+            client.close();
         } catch (Exception e) {
             log.error(e.getStackTrace());
             e.printStackTrace();

@@ -27,19 +27,20 @@ public class ProbeClient extends AbstractVerticle {
 
 
     private NetClient client;
+    private String probeServer;
 
-    public ProbeClient(Vertx v) {
+    public ProbeClient(Vertx v, String pbs) {
         vertx = v;
-
-        NetClientOptions options = new NetClientOptions().setConnectTimeout(1).setTcpKeepAlive(true);
-//                .setLogActivity(true).setReconnectAttempts(2).setReconnectInterval(1 * 1000l).setConnectTimeout
-//                        (1000);
+        this.probeServer = pbs;
+        NetClientOptions options = new NetClientOptions().setConnectTimeout(10000).setTcpKeepAlive(true)
+                .setLogActivity(true).setReconnectAttempts(86400).setReconnectInterval(10 * 1000l).setConnectTimeout
+                        (1000);
         client = vertx.createNetClient(options);
     }
 
     public static void main(String[] args) {
         Vertx v = Vertx.vertx();
-        ProbeClient client = new ProbeClient(v);
+        ProbeClient client = new ProbeClient(v,"192.168.56.1");
         try {
             client.start();
         } catch (Exception e) {
@@ -49,9 +50,10 @@ public class ProbeClient extends AbstractVerticle {
 
     public void start() throws Exception {
 
-        client.connect(Constant.PROBE_SERVER_PORT, "192.168.56.1", (AsyncResult<NetSocket> res) -> {
+        client.connect(Constant.PROBE_SERVER_PORT, probeServer, (AsyncResult<NetSocket> res) -> {
 
             if (res.succeeded()) {
+                log.info("Connected to Server");
                 NetSocket socket = res.result();
 
                 RecordParser parser = RecordParser.newDelimited("\n", h -> handleMsg(h.toString(), socket));
@@ -90,7 +92,7 @@ public class ProbeClient extends AbstractVerticle {
     }
 
     private void startHB(NetSocket socket) {
-        vertx.setPeriodic(Constant.SEND_INTERVAL, id -> socket.write("I am alive\n"));
+        vertx.setPeriodic(Constant.HB_INTERVAL, id -> socket.write("I am alive\n"));
     }
 
     private void handleMsg(String source, NetSocket socket) {

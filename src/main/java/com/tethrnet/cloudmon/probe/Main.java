@@ -9,16 +9,27 @@ import io.vertx.core.Vertx;
 public class Main {
 
     public static void main(String[] args) {
+
+        if (args.length < 1) {
+            System.out.println("please input the probe server, Useage: java -jar httpProbe.jar 192.168.56.1 ");
+            System.exit(1);
+        }
+
+        String probeServer = args[0];
+
+        String interval = args[1];
+        int intv = Integer.parseInt(interval);
+
         Vertx vertx = Vertx.vertx();
 
         MsgHandle handle = new MsgHandle(vertx);
         new Thread(handle).start();
 
-        HttpClientRunner handleHttp = new HttpClientRunner(vertx);
+        HttpClientRunner handleHttp = new HttpClientRunner(vertx, intv);
         new Thread(handleHttp).start();
 
         // start http server on startup
-        Server server =  new Server(vertx);
+        Server server = new Server(vertx);
         try {
             server.start();
         } catch (Exception e) {
@@ -26,7 +37,7 @@ public class Main {
         }
 
         // try to connect probe server on startup
-        ProbeClient probeClient = new ProbeClient(vertx);
+        ProbeClient probeClient = new ProbeClient(vertx, probeServer);
 
         MsgQueue.getInstance().setNetClient(probeClient.getClient());
         try {
