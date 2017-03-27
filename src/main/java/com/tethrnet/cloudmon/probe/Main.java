@@ -20,12 +20,15 @@ public class Main {
         String interval = args[1];
         int intv = Integer.parseInt(interval);
 
+        String countStr = args[2];
+        int count = Integer.parseInt(countStr);
+
         Vertx vertx = Vertx.vertx();
 
         MsgHandle handle = new MsgHandle(vertx);
         new Thread(handle).start();
 
-        HttpClientRunner handleHttp = new HttpClientRunner(vertx, intv);
+        HttpClientRunner handleHttp = new HttpClientRunner(vertx, intv, count);
         new Thread(handleHttp).start();
 
         // start http server on startup

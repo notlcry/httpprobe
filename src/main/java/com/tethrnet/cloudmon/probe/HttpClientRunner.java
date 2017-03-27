@@ -20,10 +20,12 @@ public class HttpClientRunner implements Runnable {
     protected Log log = LogFactory.getLog(HttpClientRunner.class);
     private Vertx vertx;
     private int interval = 100;
+    private int count = 1;
 
-    public HttpClientRunner(Vertx vertx, int intv) {
+    public HttpClientRunner(Vertx vertx, int intv, int cnt) {
         this.vertx = vertx;
         this.interval = intv;
+        this.count = cnt;
     }
 
     @Override
@@ -43,7 +45,7 @@ public class HttpClientRunner implements Runnable {
             HttpClientOptions options = new HttpClientOptions().setKeepAlive(true).setConnectTimeout(1000);
             HttpClient client = vertx.createHttpClient(options);
 
-            for (int i = 0; i < 1; i++) {
+            for (int i = 0; i < count; i++) {
                 client.getNow(port, host, "/", resp -> {
                     log.info("send http request to " + host);
                     log.debug("Got response " + resp.statusCode() + "; port: " + host);
@@ -68,6 +70,8 @@ public class HttpClientRunner implements Runnable {
             e.printStackTrace();
         }
     }
+
+
 //
 //    public void sendReqTest(String host, int port){
 //        log.info("Send Req to " + host);
