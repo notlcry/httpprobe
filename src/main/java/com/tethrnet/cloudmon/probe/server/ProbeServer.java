@@ -17,28 +17,29 @@ import io.vertx.core.parsetools.RecordParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class Server extends AbstractVerticle {
+public class ProbeServer extends AbstractVerticle {
 
-    protected Log log = LogFactory.getLog(Server.class);
+    protected Log log = LogFactory.getLog(ProbeServer.class);
 
     private ProbeAgentMgr agentMgr;
 
-    public Server() {
-        agentMgr = new ProbeAgentMgr();
+    public ProbeServer() {
+        agentMgr = ProbeAgentMgr.getInstance();
     }
 
     public static void main(String[] args) {
 
-        Server server = new Server();
+        ProbeServer server = new ProbeServer();
+        RESTServer restServer = new RESTServer();
         try {
             server.start();
+            restServer.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public void start() throws Exception {
-        agentMgr = new ProbeAgentMgr();
         vertx = Vertx.vertx();
         NetServerOptions options = new NetServerOptions().setLogActivity(true);
         NetServer server = vertx.createNetServer(options);
@@ -46,16 +47,16 @@ public class Server extends AbstractVerticle {
         server.connectHandler(sock -> {
             log.info("Incoming connection! from " + sock.remoteAddress().host());
             sock.handler(buffer -> {
-                log.debug("receive new msg from " + sock.remoteAddress().host()  + ": " + buffer);
+                log.debug("receive new msg from " + sock.remoteAddress().host() + ": " + buffer);
             });
             RecordParser parser = RecordParser.newDelimited("\n", h -> handleAgent(h.toString(), sock));
             String ip = sock.remoteAddress().host();
             sock.handler(parser);
-            sock.closeHandler( v-> {
+            sock.closeHandler(v -> {
                 log.info(ip + "is disconnect");
                 agentMgr.removeAgent(sock.remoteAddress().host());
             });
-            sock.exceptionHandler( r -> r.printStackTrace());
+            sock.exceptionHandler(r -> r.printStackTrace());
 
         }).listen(21234);
         log.info("Echo server is now listening");
@@ -65,8 +66,11 @@ public class Server extends AbstractVerticle {
         log.debug("receive record: " + record);
         if (record.equals("online")) {
             agentMgr.addAgent(sock);
-            log.debug("Add host + " + sock.remoteAddress().host() +" to AgentMgr");
-        }else{
+            log.debug("Add host + " + sock.remoteAddress().host() + " to AgentMgr");
+        } else if (record.equals("alive")) {
+            agentMgr.updateAgent(sock.remoteAddress().host(), AgentConstant.STAT_RUNNING);
+            log.debug("Add host + " + sock.remoteAddress().host() + " to AgentMgr");
+        } else {
             log.warn("receive unknown record: " + record);
         }
     }

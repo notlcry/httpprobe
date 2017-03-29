@@ -13,6 +13,8 @@ import io.vertx.core.net.NetSocket;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -20,6 +22,22 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 public class ProbeAgentMgr {
+
+    private static ProbeAgentMgr INSTANCE;
+
+    public static ProbeAgentMgr getInstance() {
+        if (INSTANCE == null) {
+            synchronized (ProbeAgentMgr.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new ProbeAgentMgr();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+
+    private ProbeAgentMgr() {
+    }
 
     protected Log log = LogFactory.getLog(ProbeAgentMgr.class);
 
@@ -49,7 +67,7 @@ public class ProbeAgentMgr {
 
         AgentStatus status = new AgentStatus();
         status.setAgentHost(agentSock.remoteAddress().host());
-        status.setStatus(AgentConstant.INIT);
+        status.setStatus(AgentConstant.STST_INIT);
         status.setSock(agentSock);
         agentStatusMap.put(agentSock.remoteAddress().host(), status);
     }
@@ -67,6 +85,30 @@ public class ProbeAgentMgr {
             log.debug("removed " + host);
         });
 
+    }
+
+
+    public synchronized void updateAgent(String host,String status) {
+        agentStatusMap.get(host).setStatus(status);
+    }
+
+    public List<JsonObject> listAgentStatus() {
+
+        List<JsonObject> probeAgentStatusList = new ArrayList<>();
+        agentStatusMap.values().forEach(probe -> {
+            probeAgentStatusList.add(new JsonObject().put("host", probe.getAgentHost()).put("status", probe.getStatus
+                    ()));
+        });
+
+        return probeAgentStatusList;
+    }
+
+    public JsonObject getAgentStatus(String host) {
+
+        AgentStatus agentstatus = agentStatusMap.get(host);
+        JsonObject agent = new JsonObject().put("host",agentstatus.getAgentHost()).put("status",agentstatus.getStatus());
+
+        return agent;
     }
 
 }

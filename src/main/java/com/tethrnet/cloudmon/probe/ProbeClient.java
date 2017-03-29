@@ -53,7 +53,7 @@ public class ProbeClient extends AbstractVerticle {
         client.connect(Constant.PROBE_SERVER_PORT, probeServer, (AsyncResult<NetSocket> res) -> {
 
             if (res.succeeded()) {
-                log.info("Connected to Server");
+                log.info("Connected to ProbeServer");
                 NetSocket socket = res.result();
 
                 RecordParser parser = RecordParser.newDelimited("\n", h -> handleMsg(h.toString(), socket));
@@ -92,7 +92,7 @@ public class ProbeClient extends AbstractVerticle {
     }
 
     private void startHB(NetSocket socket) {
-        vertx.setPeriodic(Constant.HB_INTERVAL, id -> socket.write("I am alive\n"));
+        vertx.setPeriodic(Constant.HB_INTERVAL, id -> socket.write("alive\n"));
     }
 
     private void handleMsg(String source, NetSocket socket) {

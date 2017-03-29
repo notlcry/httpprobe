@@ -32,7 +32,7 @@ public class Main {
         new Thread(handleHttp).start();
 
         // start http server on startup
-        Server server = new Server(vertx);
+        HttpServer server = new HttpServer(vertx);
         try {
             server.start();
         } catch (Exception e) {

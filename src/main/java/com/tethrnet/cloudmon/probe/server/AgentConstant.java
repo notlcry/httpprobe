@@ -13,7 +13,11 @@ package com.tethrnet.cloudmon.probe.server;
  */
 public class AgentConstant {
 
-    public static final String INIT = "init_status";
+    public static final String STST_INIT = "init_status";
+
+    public static final String STAT_RUNNING = "running";
+
+
     public static final String RUNNING = "running";
     public static final String FAIL = "fail";
 
