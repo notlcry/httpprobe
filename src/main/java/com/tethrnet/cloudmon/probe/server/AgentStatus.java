@@ -10,12 +10,19 @@ package com.tethrnet.cloudmon.probe.server;
 
 import io.vertx.core.net.NetSocket;
 
+import java.util.Date;
+import java.util.List;
+
 /**
  * Created by huiyu on 17/3/7.
  */
 public class AgentStatus {
     private String agentHost;
     private String status;
+    private Date startTime;
+    private List<String> dest;
+    private String type;
+    private int rate;
     private NetSocket sock;
 
     public String getAgentHost() {
@@ -40,5 +47,37 @@ public class AgentStatus {
 
     public void setSock(NetSocket sock) {
         this.sock = sock;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public List<String> getDest() {
+        return dest;
+    }
+
+    public void setDest(List<String> dest) {
+        this.dest = dest;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public int getRate() {
+        return rate;
+    }
+
+    public void setRate(int rate) {
+        this.rate = rate;
     }
 }

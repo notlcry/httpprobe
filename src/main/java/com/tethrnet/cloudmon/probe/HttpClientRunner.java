@@ -51,10 +51,11 @@ public class HttpClientRunner implements Runnable {
                     log.debug("Got response " + resp.statusCode() + "; port: " + host);
                     resp.bodyHandler(body -> {
                         log.debug("got data " + body.toString("ISO-8859-1"));
+                        client.close();
                     });
                 });
             }
-            client.close();
+
         } catch (Exception e) {
             log.error(e.getStackTrace());
             e.printStackTrace();
