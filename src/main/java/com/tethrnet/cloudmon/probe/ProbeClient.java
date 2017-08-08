@@ -18,29 +18,29 @@ import io.vertx.core.parsetools.RecordParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-/*
- * @author <a href="http://tfox.org">Tim Fox</a>
- */
+
 public class ProbeClient extends AbstractVerticle {
 
+    private final String clientIp;
     protected Log log = LogFactory.getLog(ProbeClient.class);
 
 
     private NetClient client;
     private String probeServer;
 
-    public ProbeClient(Vertx v, String pbs) {
+    public ProbeClient(Vertx v, String pbs, String clientIp) {
         vertx = v;
         this.probeServer = pbs;
         NetClientOptions options = new NetClientOptions().setConnectTimeout(10000).setTcpKeepAlive(true)
                 .setLogActivity(true).setReconnectAttempts(86400).setReconnectInterval(10 * 1000l).setConnectTimeout
                         (1000);
         client = vertx.createNetClient(options);
+        this.clientIp = clientIp;
     }
 
     public static void main(String[] args) {
         Vertx v = Vertx.vertx();
-        ProbeClient client = new ProbeClient(v,"192.168.56.1");
+        ProbeClient client = new ProbeClient(v,"192.168.56.1","127.0.0.1");
         try {
             client.start();
         } catch (Exception e) {
@@ -67,7 +67,7 @@ public class ProbeClient extends AbstractVerticle {
 
                 socket.handler(parser);
 
-                socket.write("online\n");
+                socket.write("online-" + clientIp + "\n");
 
                 socket.closeHandler(r -> {
                     log.info("Socket closed");

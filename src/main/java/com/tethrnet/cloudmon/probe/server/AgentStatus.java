@@ -10,6 +10,8 @@ package com.tethrnet.cloudmon.probe.server;
 
 import io.vertx.core.net.NetSocket;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -18,11 +20,12 @@ import java.util.List;
  */
 public class AgentStatus {
     private String agentHost;
+    private String socketHost;
     private String status;
-    private Date startTime;
-    private List<String> dest;
-    private String type;
-    private int rate;
+    private LocalDateTime startTime;
+    private List<String> dest = new ArrayList<>();
+    private String type = "http";
+    private int rate = 10;
     private NetSocket sock;
 
     public String getAgentHost() {
@@ -49,11 +52,11 @@ public class AgentStatus {
         this.sock = sock;
     }
 
-    public Date getStartTime() {
+    public LocalDateTime getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(Date startTime) {
+    public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
 
@@ -79,5 +82,13 @@ public class AgentStatus {
 
     public void setRate(int rate) {
         this.rate = rate;
+    }
+
+    public String getSocketHost() {
+        return socketHost;
+    }
+
+    public void setSocketHost(String socketHost) {
+        this.socketHost = socketHost;
     }
 }

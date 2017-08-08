@@ -21,22 +21,26 @@ public class HttpClientRunner implements Runnable {
     private Vertx vertx;
     private int interval = 100;
     private int count = 1;
+    private int everyCount = 100;
 
-    public HttpClientRunner(Vertx vertx, int intv, int cnt) {
+    public HttpClientRunner(Vertx vertx, int intv, int cnt, int everyCount) {
         this.vertx = vertx;
         this.interval = intv;
         this.count = cnt;
+        this.everyCount = everyCount;
     }
 
     @Override
     public void run() {
         vertx.setPeriodic(interval, id -> {
 
-            MsgQueue.getInstance().getHosts().forEach((host) -> {
+            for (int i = 0; i < everyCount; i++) {
+                MsgQueue.getInstance().getHosts().forEach((host) -> {
 //                sendReq(host, Constant.HTTP_SERVER_PORT);
-                startProbe(host, Constant.HTTP_SERVER_PORT);
-            });
-            log.debug("end a loop");
+                    startProbe(host, Constant.HTTP_SERVER_PORT);
+                });
+            }
+            log.debug("end a interval");
         });
     }
 

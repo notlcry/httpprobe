@@ -13,6 +13,8 @@ import io.vertx.core.net.NetSocket;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +26,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ProbeAgentMgr {
 
     private static ProbeAgentMgr INSTANCE;
+    protected Log log = LogFactory.getLog(ProbeAgentMgr.class);
+    private ConcurrentHashMap<String, AgentStatus> agentStatusMap = new ConcurrentHashMap<>();
+
+    private ProbeAgentMgr() {
+    }
 
     public static ProbeAgentMgr getInstance() {
         if (INSTANCE == null) {
@@ -36,40 +43,40 @@ public class ProbeAgentMgr {
         return INSTANCE;
     }
 
-    private ProbeAgentMgr() {
-    }
-
-    protected Log log = LogFactory.getLog(ProbeAgentMgr.class);
-
-
-    private ConcurrentHashMap<String, AgentStatus> agentStatusMap = new ConcurrentHashMap<>();
-
     public void updateStatus(String agentHost, AgentStatus status) {
         agentStatusMap.put(agentHost, status);
     }
 
-    public synchronized void addAgent(NetSocket agentSock) {
+    public synchronized void addAgent(NetSocket agentSock, String clientIp) {
+
+        AgentStatus status = new AgentStatus();
+        status.setAgentHost(clientIp);
+        status.setStatus(AgentConstant.STST_INIT);
+        status.setSock(agentSock);
+        status.setRate(10);
+        status.setStartTime(LocalDateTime.now());
+        status.setSocketHost(agentSock.remoteAddress().host());
+
         //broadcast rookie to older and add old to rookie
         agentStatusMap.forEach((k, agent) -> {
             agent.getSock().write(new JsonObject()
                     .put("action", "add")
-                    .put("host", agentSock.remoteAddress().host())
+                    .put("host", clientIp)
                     .encode() + "\n");
-            log.debug("add " + agentSock.remoteAddress().host() + " to " + agent.getSock().remoteAddress().host());
+            log.debug("add " + clientIp + " to " + agent.getSock().remoteAddress().host());
             //
             String msgFornew = new JsonObject()
                     .put("action", "add")
-                    .put("host", agent.getSock().remoteAddress().host())
+                    .put("host", agent.getAgentHost())
                     .encode() + "\n";
             agentSock.write(msgFornew);
-            log.debug("add " + agent.getSock().remoteAddress().host() + " to " + agentSock.remoteAddress().host());
+            log.debug("add " + agent.getAgentHost() + " to " + clientIp);
+
+            agent.getDest().add(clientIp);
+            status.getDest().add(agent.getAgentHost());
         });
 
-        AgentStatus status = new AgentStatus();
-        status.setAgentHost(agentSock.remoteAddress().host());
-        status.setStatus(AgentConstant.STST_INIT);
-        status.setSock(agentSock);
-        agentStatusMap.put(agentSock.remoteAddress().host(), status);
+        agentStatusMap.put(clientIp, status);
     }
 
     public synchronized void removeAgent(String host) {
@@ -88,16 +95,30 @@ public class ProbeAgentMgr {
     }
 
 
-    public synchronized void updateAgent(String host,String status) {
-        agentStatusMap.get(host).setStatus(status);
+    public synchronized void updateAgent(String host, String status) {
+        if (agentStatusMap.get(host) != null) {
+            agentStatusMap.get(host).setStatus(status);
+        }else{
+            log.info("host: " + host + " not found.");
+        }
+
     }
 
     public List<JsonObject> listAgentStatus() {
 
         List<JsonObject> probeAgentStatusList = new ArrayList<>();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
         agentStatusMap.values().forEach(probe -> {
-            probeAgentStatusList.add(new JsonObject().put("host", probe.getAgentHost()).put("status", probe.getStatus
-                    ()));
+            probeAgentStatusList.add(new JsonObject().
+                    put("host", probe.getAgentHost()).
+                    put("status", probe.getStatus()).
+                    put("start_time", probe.getStartTime().format(formatter)).
+                    put("type", probe.getType()).
+                    put("rate", probe.getRate()).
+                    put("dest_host", probe.getDest())
+            );
         });
 
         return probeAgentStatusList;
@@ -106,9 +127,21 @@ public class ProbeAgentMgr {
     public JsonObject getAgentStatus(String host) {
 
         AgentStatus agentstatus = agentStatusMap.get(host);
-        JsonObject agent = new JsonObject().put("host",agentstatus.getAgentHost()).put("status",agentstatus.getStatus());
+        JsonObject agent = new JsonObject().put("host", agentstatus.getAgentHost()).put("status", agentstatus
+                .getStatus());
 
         return agent;
+    }
+
+    public String getClientBySockIp(String sockIp) {
+        AgentStatus agent = agentStatusMap.values().stream().filter(agentStatus -> sockIp.equals(agentStatus
+                .getSocketHost())).findAny()
+                .orElse(null);
+        if (agent != null) {
+            return agent.getAgentHost();
+        }else {
+            return null;
+        }
     }
 
 }

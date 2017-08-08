@@ -54,7 +54,10 @@ public class ProbeServer extends AbstractVerticle {
             sock.handler(parser);
             sock.closeHandler(v -> {
                 log.info(ip + "is disconnect");
-                agentMgr.removeAgent(sock.remoteAddress().host());
+                String clientIp = agentMgr.getClientBySockIp(sock.remoteAddress().host());
+                if (clientIp != null) {
+                    agentMgr.removeAgent(clientIp);
+                }
             });
             sock.exceptionHandler(r -> r.printStackTrace());
 
@@ -64,11 +67,13 @@ public class ProbeServer extends AbstractVerticle {
 
     private void handleAgent(String record, NetSocket sock) {
         log.debug("receive record: " + record);
-        if (record.equals("online")) {
-            agentMgr.addAgent(sock);
+        if (record.startsWith("online")) {
+            String clientIp = record.split("-")[1];
+            agentMgr.addAgent(sock, clientIp);
             log.debug("Add host + " + sock.remoteAddress().host() + " to AgentMgr");
         } else if (record.equals("alive")) {
-            agentMgr.updateAgent(sock.remoteAddress().host(), AgentConstant.STAT_RUNNING);
+            String clientIp = agentMgr.getClientBySockIp(sock.remoteAddress().host());
+            agentMgr.updateAgent(clientIp, AgentConstant.STAT_RUNNING);
             log.debug("Add host + " + sock.remoteAddress().host() + " to AgentMgr");
         } else {
             log.warn("receive unknown record: " + record);

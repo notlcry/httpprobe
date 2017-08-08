@@ -81,11 +81,16 @@ public class RESTServer extends AbstractVerticle {
 
         List<JsonObject> probes = ProbeAgentMgr.getInstance().listAgentStatus();
         probes.forEach(v -> arr.add(v));
-        routingContext.response().putHeader("content-type", "application/json").end(arr.encodePrettily());
+        routingContext.response().putHeader("content-type", "application/json").end(new JsonObject().put("probeList",
+                arr).encode());
     }
 
     private void sendError(int statusCode, HttpServerResponse response) {
         response.setStatusCode(statusCode).end();
     }
 
+    public static void main(String[] args) {
+        RESTServer restServer = new RESTServer();
+        restServer.start();
+    }
 }

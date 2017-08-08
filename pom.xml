@@ -23,7 +23,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.tethrnet.cloudmon.probe.Main</mainClass>
+                            <mainClass>com.tethrnet.cloudmon.probe.server.ProbeServer</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
